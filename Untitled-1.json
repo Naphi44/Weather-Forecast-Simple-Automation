@@ -1,0 +1,266 @@
+{
+  "name": "Weather Report",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "caa3cdd4-85e5-449e-bbb4-1e257ed623d0",
+      "name": "When chat message received",
+      "webhookId": "f195d5ff-1fe8-41b6-b73e-4142a8d1faf9"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "id": "9bfb04b2-bd14-4c7d-9a66-b0b14368eb4c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/2.5/weather",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "{\n  \"q\": \"Addis Ababa\",\n  \"units\": \"metric\",\n  \"appid\": \"x\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        60
+      ],
+      "id": "f9880295-fe1e-429f-bde6-6841f88b0e39",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        320
+      ],
+      "id": "e92fe953-967f-49a6-ac93-4e242230ccce",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1141da1-1592-41e3-9b57-a010c1f3bf56",
+              "name": "description",
+              "value": "={{ $json.weather[0].description }}",
+              "type": "string"
+            },
+            {
+              "id": "38dc2694-2316-4e58-8d52-daca9db4b14a",
+              "name": "temp",
+              "value": "={{ $json.main.temp }}",
+              "type": "string"
+            },
+            {
+              "id": "1094c65e-b474-4969-9ff2-6b99832aa2e5",
+              "name": "humidity",
+              "value": "={{ $json.main.humidity }}",
+              "type": "string"
+            },
+            {
+              "id": "dc77b5e8-7aa9-4b9b-8816-b135847b74bc",
+              "name": "=windSpeed",
+              "value": "={{ $json.wind.speed }} ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        500,
+        60
+      ],
+      "id": "e05b2f49-ffa9-4358-9e24-fc96c737ca48",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "biniyamfikiru59@gmail.com",
+        "subject": "Today's Weather Forecast",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1060,
+        120
+      ],
+      "id": "cdc60f91-c5cb-44be-8e01-f1a263f65134",
+      "name": "Send a message",
+      "webhookId": "1e15555b-5171-47a7-8dac-d93fd2cecb85",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "c3ptOyT2Zz97OvvV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Summarize today’s weather in Addis Ababa and suggest what to wear and what to expect:\n• Sky: {{ $json.description }}\n• Temperature: {{ $json.temp }}°C\n• Humidity: {{ $json.humidity }}%\n• Wind Speed: {{ $json.windSpeed }} m/s\n\nInclude:\n1. A two-sentence summary of conditions.\n2. One or two clothing recommendations for base, mid, and outer layers.\n3. A note on any rain risk or strong winds to plan around.\n",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        680,
+        60
+      ],
+      "id": "52b91c10-e157-4b01-b6ce-1a75115a898d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        760,
+        280
+      ],
+      "id": "dc6ec580-a687-47e3-b403-464441039992",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "nVGW9OL83WHIApo4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "226725a9-a001-49d1-b925-44393ea933bc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc25e8b7774247b6f93937666f4ed268adefc4aed64c8794b3000f5f2c83afc1"
+  },
+  "id": "j4anS8QgREVYjyS3",
+  "tags": []
+}
